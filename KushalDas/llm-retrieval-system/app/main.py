@@ -1,10 +1,14 @@
+import sys
+import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
+sys.path.append(os.path.abspath(".."))
+from app.services.pdf_utils import download_pdf,extract_text_from_pdf
 
 class OutputRequest(BaseModel):
-    document: str
-    question: List[str]
+    documents: str
+    questions: List[str]
 
 app = FastAPI()
 
@@ -14,6 +18,11 @@ def root():
 
 @app.post("/api/v1/hackrx/run")
 def run(req: OutputRequest):
-    return { "message" : "Received successfully",
-             "document_url": req.document,
-             "question": req.question}
+   path = download_pdf(req.documents)
+   text = extract_text_from_pdf(path)
+   return{
+       "message":"Pdf extracted",
+       "size" : len(text),
+       "summary": text[:500],
+       "questions": req.questions
+   }
